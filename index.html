@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Future Career Advice Practice</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f4f7fb;margin:0;color:#243447}
+.app{max-width:900px;margin:0 auto;padding:24px}
+.card{background:white;border-radius:18px;padding:28px;box-shadow:0 4px 18px #0001;margin-bottom:18px}
+h1,h2{margin-top:0}
+button{border:0;border-radius:12px;padding:12px 20px;font-size:16px;cursor:pointer;margin:5px}
+.primary{background:#315efb;color:white}.secondary{background:#e9eef7}
+textarea,input{width:100%;box-sizing:border-box;border:2px solid #d8dfeb;border-radius:12px;padding:14px;font-size:18px}
+textarea{min-height:90px}
+.hidden{display:none}
+.chat{background:#f7f9fc;border-radius:14px;padding:18px;margin:12px 0}
+.ai{border-left:5px solid #315efb}.student{border-left:5px solid #43a047}
+.help{background:#fff8dc;border:1px solid #ead37b;padding:16px;border-radius:12px;margin-top:12px}
+.choice{display:inline-block;background:#eef2f8;padding:9px 14px;border-radius:20px;margin:5px}
+.progress{height:10px;background:#e3e8f0;border-radius:10px;overflow:hidden}.bar{height:100%;background:#315efb;width:10%}
+.small{color:#667085;font-size:14px}.score{font-size:42px;font-weight:bold}
+</style>
+</head>
+<body>
+<div class="app">
+
+<section id="home" class="card">
+<h1>🎤 Future Career Advice Practice</h1>
+<p><b>Help Riku think about his future!</b></p>
+<p>Practice giving an opinion, giving a reason, asking questions, reacting, and giving advice.</p>
+<div class="card" style="background:#f7f9fc">
+<p><b>Riku's problem</b></p>
+<p>Riku likes using computers and wants to get a job in the future. He watched a video about AI and robots. AI can write reports, translate languages, make pictures, and answer questions. Robots can work in factories and restaurants.</p>
+<p>Riku wonders: <b>“What kind of job can I do? What skills should I learn for the future?”</b></p>
+</div>
+<button class="primary" onclick="start()">START</button>
+</section>
+
+<section id="practice" class="hidden">
+<div class="card">
+<div class="progress"><div id="bar" class="bar"></div></div>
+<p class="small" id="stepLabel"></p>
+<div id="chat"></div>
+<div id="inputArea">
+<textarea id="answer" placeholder="Type your answer in English."></textarea>
+<button class="primary" onclick="submitAnswer()">SEND</button>
+<button class="secondary" onclick="showHelp()">💡 HELP</button>
+<button class="secondary" onclick="speechInput()">🎤 SPEAK</button>
+</div>
+<div id="help" class="help hidden"></div>
+</div>
+</section>
+
+<section id="result" class="card hidden">
+<h2>🎉 Your Practice Result</h2>
+<div class="score" id="score"></div>
+<div id="feedback"></div>
+<h3>Your best advice</h3>
+<div class="chat student" id="finalAdvice"></div>
+<h3>Mini Report</h3>
+<p>We think he should <input id="report1" placeholder="..." /></p>
+<p>We chose this advice because <input id="report2" placeholder="..." /></p>
+<p>The most important skill is <input id="report3" placeholder="..." /></p>
+<button class="primary" onclick="saveReport()">SAVE MY REPORT</button>
+<p id="saved" class="small"></p>
+<button class="secondary" onclick="location.reload()">TRY AGAIN</button>
+</section>
+
+</div>
+
+<script>
+let step=0, score=0, finalAdvice="";
+const steps=[
+ {q:"What is Riku worried about?", target:["future","job","ai","robot"], help:["He is worried about his future job.","He is worried that AI and robots can do many things.","Useful words: future / job / AI / robots"]},
+ {q:"What skill is important for Riku?", target:["communication","creativity","critical","teamwork","english","digital","learning"], help:["I think communication is important.","I think digital skills are important.","Useful words: communication / creativity / teamwork / digital skills / learning new things"]},
+ {q:"Why do you think so?", target:["because"], help:["Because he needs to work with other people.","Because he needs to use technology.","Try: Because ..."]},
+ {q:"What advice should we give Riku?", target:["should","need"], help:["I think he should learn digital skills.","He should learn new things.","Try: I think he should ..."]},
+ {q:"Why is your advice important?", target:["because"], help:["Because he can work with AI.","Because he needs to prepare for the future.","Try: Because ..."]},
+ {q:"How can Riku use AI wisely?", target:["learn","help","work","use","study"], help:["He can use AI to learn new things.","He can use AI to get ideas.","Try: He can ..."]},
+ {q:"What can humans do better than AI?", target:["human","people","communicat","creative","teamwork","feel","care"], help:["Humans can communicate with other people.","Humans can work as a team.","Try: Humans can ..."]},
+ {q:"I think creativity is very important. Do you agree?", target:["agree","disagree","because","yes","no"], help:["I agree. / I disagree.","I agree because creativity is important.","Try: I agree because ..."]},
+ {q:"What is your best advice for Riku?", target:["should","need"], help:["I think he should learn new things.","My advice is that he should work with AI.","Try: I think he should ..."]}
+];
+
+function show(id){document.querySelectorAll("section").forEach(x=>x.classList.add("hidden"));document.getElementById(id).classList.remove("hidden")}
+function start(){show("practice");step=0;score=0;chat("AI",steps[0].q);update();prepareMicrophone()}
+function update(){document.getElementById("stepLabel").textContent=`Step ${step+1} / ${steps.length}`;document.getElementById("bar").style.width=((step)/steps.length*100+10)+"%";document.getElementById("answer").value="";document.getElementById("help").classList.add("hidden")}
+function chat(who,text){let d=document.createElement("div");d.className="chat "+(who==="AI"?"ai":"student");d.innerHTML="<b>"+who+":</b><br>"+escapeHtml(text);document.getElementById("chat").appendChild(d);d.scrollIntoView({behavior:"smooth"})}
+function escapeHtml(s){return s.replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function submitAnswer(){
+ let a=document.getElementById("answer").value.trim(); if(!a)return;
+ chat("You",a);
+ let s=steps[step], low=a.toLowerCase();
+ let good=s.target.some(t=>low.includes(t));
+ if(good){score++;chat("AI",positive(step))}
+ else{chat("AI","Good try! Let's keep going. "+follow(step))}
+ step++;
+ if(step<steps.length){setTimeout(()=>{chat("AI",steps[step].q);update()},300)}
+ else setTimeout(finish,400);
+}
+function positive(i){
+ const p=["Good! You explained Riku's problem.","Good choice!","Nice reason!","Good advice!","Good point!","That's a good idea.","Interesting!","Good! You gave your opinion.","Excellent! Now let's make your final advice."];
+ return p[i];
+}
+function follow(i){return i===0?"Try using: He is worried about his future job.":i===2||i===4||i===7?"Try giving a reason with “Because ...”.":"Try using one of the expressions in HELP."}
+function showHelp(){let h=document.getElementById("help");h.innerHTML="<b>💡 HELP</b><br>"+steps[step].help.join("<br>");h.classList.remove("hidden")}
+function finish(){
+ show("result");
+ let pct=Math.round(score/steps.length*100);
+ document.getElementById("score").textContent=pct+"%";
+ document.getElementById("feedback").innerHTML=pct>=80?"<p>🌟 Excellent! You are ready for the pair conversation.</p>":pct>=50?"<p>👍 Good job! Practice the expressions one more time before the pair conversation.</p>":"<p>💪 Keep practicing. Use HELP and try again.</p>";
+ document.getElementById("finalAdvice").textContent="Write your best advice in the Mini Report below.";
+}
+function saveReport(){document.getElementById("saved").textContent="✓ Your Mini Report is ready to use in class."}
+// マイク許可状態を確認するための関数
+// ※ブラウザの仕様上、Webサイト側から「永久に許可」を設定することはできません。
+// 一度許可すると、通常は同じサイトでは再度確認されません。
+let micPermissionGranted = false;
+
+async function prepareMicrophone(){
+  if(!navigator.permissions || !navigator.permissions.query) return true;
+
+  try {
+    const permission = await navigator.permissions.query({name:"microphone"});
+    if(permission.state === "granted"){
+      micPermissionGranted = true;
+      showSpeechStatus("🎤 Microphone is ready.");
+      return true;
+    }
+    if(permission.state === "denied"){
+      micPermissionGranted = false;
+      showSpeechStatus("⚠ マイクがブロックされています。アドレスバーのマイク設定から「許可」にしてください。");
+      return false;
+    }
+  } catch(e) {
+    // Permissions APIに対応していないブラウザでは通常どおりSpeechRecognitionを開始
+  }
+  return true;
+}
+
+async function speechInput(){
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SpeechRecognition){
+    alert("このブラウザでは音声入力に対応していません。Microsoft Edge または Google Chrome の最新版をお試しください。");
+    return;
+  }
+
+  // 初回だけブラウザにマイク許可を求め、以後は許可状態を利用する
+  if(!micPermissionGranted){
+    const ready = await prepareMicrophone();
+    if(!ready) return;
+  }
+
+  const r = new SpeechRecognition();
+  r.lang = "en-US";
+  r.interimResults = false;
+  r.continuous = false;
+  r.maxAlternatives = 1;
+
+  const button = document.querySelector('button[onclick="speechInput()"]');
+  const originalText = button.textContent;
+  button.textContent = "🎙 Listening...";
+  button.disabled = true;
+
+  r.onstart = () => {
+    micPermissionGranted = true;
+    showSpeechStatus("🎙 Listening... Speak in English.");
+  };
+
+  r.onresult = (event) => {
+    const text = event.results[0][0].transcript;
+    document.getElementById("answer").value = text;
+    showSpeechStatus("✓ Speech recognized.");
+  };
+
+  r.onerror = (event) => {
+    let message = "音声入力でエラーが発生しました。";
+    if(event.error === "not-allowed" || event.error === "service-not-allowed"){
+      micPermissionGranted = false;
+      message = "マイクの使用が許可されていません。ブラウザのアドレスバー付近のマイク設定を「許可」にしてください。";
+    } else if(event.error === "no-speech"){
+      message = "音声を認識できませんでした。もう一度ゆっくり話してください。";
+    } else if(event.error === "audio-capture"){
+      message = "マイクが見つかりません。PCのマイク接続を確認してください。";
+    } else if(event.error === "network"){
+      message = "音声認識サービスに接続できませんでした。インターネット接続を確認してください。";
+    }
+    showSpeechStatus("⚠ " + message);
+  };
+
+  r.onend = () => {
+    button.textContent = originalText;
+    button.disabled = false;
+  };
+
+  try {
+    r.start();
+  } catch(e) {
+    button.textContent = originalText;
+    button.disabled = false;
+    showSpeechStatus("⚠ 音声入力を開始できませんでした。もう一度押してください。");
+  }
+}
+
+function showSpeechStatus(message){
+  let box = document.getElementById("speechStatus");
+  if(!box){
+    box = document.createElement("div");
+    box.id = "speechStatus";
+    box.style.marginTop = "10px";
+    box.style.padding = "10px";
+    box.style.borderRadius = "10px";
+    box.style.background = "#eef4ff";
+    box.style.color = "#243447";
+    document.getElementById("inputArea").appendChild(box);
+  }
+  box.textContent = message;
+}
+</script>
+</body>
+</html>
